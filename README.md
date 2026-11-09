@@ -92,17 +92,20 @@ automatically.
 | `SESSION_TTL_HOURS` / `SESSION_IDLE_TIMEOUT_MINUTES` | `12` / `120` | Absolute and idle session lifetime |
 | `LOG_LEVEL` | `info` | pino log level |
 
-## Deployment (Render)
+## Deployment
 
-Each repository has its own `render.yaml` blueprint. Deploy the API first:
+The API runs on any Node.js host with a PostgreSQL database.
 
-1. **API:** Render → **New → Blueprint** → select this repo. It creates the `uemp-db` PostgreSQL database and
-   the `uemp-api` web service. On every start the service runs pending migrations; it seeds demo data only
-   if the database is empty.
-2. **Web client:** **New → Blueprint** → select the [uemp-client](https://github.com/davidwale/uemp-client) repo. It creates the `uemp-web` static site,
-   which proxies `/api/*` to `uemp-api`.
-3. If Render assigns different URLs than `uemp-api.onrender.com` / `uemp-web.onrender.com`, update
-   `CORS_ORIGINS` here and the `/api/*` rewrite destination in the client's `render.yaml`.
+| Setting | Value |
+|---|---|
+| Build command | `npm ci --include=dev && npm run build` |
+| Start command | `npm run start:prod`: applies pending migrations, seeds demo data only if the database is empty, then starts the server |
+| Health check | `GET /api/health` |
+| Environment | `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_SSL` (`true` for most managed Postgres), `CORS_ORIGINS` (the web client's URL) |
+
+Deploy the API first, then the [web client](https://github.com/davidwale/uemp-client). The client's host must
+proxy `/api/*` to this API, so the browser sees one origin and the `HttpOnly` / `SameSite=Lax` session cookie
+works without cross-site configuration. See the client README for details.
 
 ## Documentation
 
