@@ -8,7 +8,7 @@ async function main() {
   logger.info('Database connection established');
 
   const server = createApp().listen(env.PORT, () => {
-    logger.info(`UEMP API listening on port ${env.PORT}`);
+    logger.info({ corsOrigins: env.CORS_ORIGINS }, `UEMP API listening on port ${env.PORT}`);
   });
 
   const shutdown = (signal: string) => {
