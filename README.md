@@ -4,7 +4,7 @@ REST API for a role-based university management system. Students register for co
 results. Lecturers enter and submit scores. Department administrators approve results and manage their
 department. The Super Administrator manages the whole institution.
 
-**Live app:** _add URL after deployment_  ·  **Web client repo:** [uemp-client](https://github.com/davidwale/uemp-client)  ·  **Stack:** Express 5 · TypeScript · Sequelize · PostgreSQL · Zod · Vitest
+**Live app:** https://uemp-client.vercel.app  ·  **Web client repo:** [uemp-client](https://github.com/davidwale/uemp-client)  ·  **Stack:** Express 5 · TypeScript · Sequelize · PostgreSQL · Zod · Vitest
 
 > UEMP is two apps in two repositories: this API, and the React web client ([uemp-client](https://github.com/davidwale/uemp-client)).
 > This README is the main entry point. Technical documentation lives in [`docs/`](docs).
