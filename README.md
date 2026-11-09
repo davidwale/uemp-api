@@ -94,18 +94,23 @@ automatically.
 
 ## Deployment
 
-The API runs on any Node.js host with a PostgreSQL database.
+**API and database: Render** (Blueprint included)
+1. Render dashboard → **New → Blueprint** → select this repository.
+2. When prompted for `CORS_ORIGINS`, enter the web client's Vercel URL, e.g. `https://uemp-client.vercel.app`.
+3. Render creates the `uemp-db` PostgreSQL database and the `uemp-api` web service, and injects the database's
+   connection string as `DATABASE_URL`. On every start the service applies pending migrations; it seeds demo
+   data only when the database is empty.
+4. Check `https://<your-service>.onrender.com/api/health` returns `{"status":"ok"}`.
 
-| Setting | Value |
-|---|---|
-| Build command | `npm ci --include=dev && npm run build` |
-| Start command | `npm run start:prod`: applies pending migrations, seeds demo data only if the database is empty, then starts the server |
-| Health check | `GET /api/health` |
-| Environment | `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_SSL` (`true` for most managed Postgres), `CORS_ORIGINS` (the web client's URL) |
+**Web client: Vercel.** Deploy the [uemp-client](https://github.com/davidwale/uemp-client) repo and point its
+`/api/*` rewrite at this service's URL. The browser then sees one origin, so the `HttpOnly` / `SameSite=Lax`
+session cookie works without cross-site configuration.
 
-Deploy the API first, then the [web client](https://github.com/davidwale/uemp-client). The client's host must
-proxy `/api/*` to this API, so the browser sees one origin and the `HttpOnly` / `SameSite=Lax` session cookie
-works without cross-site configuration. See the client README for details.
+On Render's free plan the service sleeps after a period of inactivity, and the first request afterwards takes
+up to a minute while it wakes. Open `/api/health` before a demo.
+
+To host elsewhere: any Node.js host with PostgreSQL works. Build with `npm ci --include=dev && npm run build`,
+start with `npm run start:prod`, and set `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_SSL` and `CORS_ORIGINS`.
 
 ## Documentation
 

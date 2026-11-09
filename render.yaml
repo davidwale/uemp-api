@@ -1,0 +1,32 @@
+# Render Blueprint for the UEMP API: a Node web service and a PostgreSQL database.
+# Deploy: Render dashboard → New → Blueprint → select this repository.
+databases:
+  - name: uemp-db
+    plan: free
+    databaseName: uemp
+    user: uemp
+
+services:
+  - type: web
+    name: uemp-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    # Applies pending migrations, seeds demo data only if the database is empty, then starts the API.
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: uemp-db
+          property: connectionString # internal URL, injected automatically
+      - key: DATABASE_SSL
+        value: 'false' # traffic stays on Render's private network
+      - key: CORS_ORIGINS
+        sync: false # prompted during Blueprint setup: the web client's URL, e.g. https://uemp-client.vercel.app
+      - key: LOG_LEVEL
+        value: info

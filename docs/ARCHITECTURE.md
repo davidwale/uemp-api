@@ -6,8 +6,8 @@ UEMP is two independently developed and deployed applications, each in its own r
 
 | Repository | What it is | Deployed as |
 |---|---|---|
-| **uemp-api** (this repo) | REST API: Express 5, TypeScript, Sequelize, PostgreSQL | Node web service + PostgreSQL |
-| **uemp-client** | Single-page app: React 19, TypeScript, Tailwind CSS v4, Vite | Static site |
+| **uemp-api** (this repo) | REST API: Express 5, TypeScript, Sequelize, PostgreSQL | Render web service + Render PostgreSQL |
+| **uemp-client** | Single-page app: React 19, TypeScript, Tailwind CSS v4, Vite | Vercel (static, proxies `/api`) |
 
 ```mermaid
 flowchart LR
@@ -59,14 +59,16 @@ uemp-api/
 │  ├─ lib/                   errors, logger, audit, pagination, csv, password, tokens
 │  └─ db/                    sequelize instance, Umzug migrator, migrations, seeders, CLI
 ├─ tests/                    Vitest + Supertest against a real PostgreSQL test DB
-└─ docs/                     this documentation
+├─ docs/                     this documentation
+└─ render.yaml               Render Blueprint (API + PostgreSQL)
 
 uemp-client/
-└─ src/
-   ├─ app/                   router, route guards, error boundary
-   ├─ components/ui|layout   design-system primitives and the app shell
-   ├─ features/<area>/       pages by role: auth, student, lecturer, admin, shared
-   └─ hooks/ lib/ types/     auth hooks, API client, query client, API response types
+├─ src/
+│  ├─ app/                   router, route guards, error boundary
+│  ├─ components/ui|layout   design-system primitives and the app shell
+│  ├─ features/<area>/       pages by role: auth, student, lecturer, admin, shared
+│  └─ hooks/ lib/ types/     auth hooks, API client, query client, API response types
+└─ vercel.json               Vercel config: /api proxy, SPA fallback, security headers
 ```
 
 ## Backend request lifecycle
@@ -145,7 +147,7 @@ guarantees (constraints, locks, transactions) live there.
   and closes the DB pool.
 - **Health check**: `GET /api/health`.
 - **Deploys** run `migrate` before start. The seed only runs against an empty database.
-- **Security headers for the UI** (CSP, frame denial, nosniff) are set by the static host's configuration. Helmet sets them for the API.
+- **Security headers for the UI** (CSP, frame denial, nosniff) are set in `vercel.json`. Helmet sets them for the API.
 
 ## Scaling path (not needed for this scope)
 - Sessions are in PostgreSQL; move them to Redis if request volume makes the per-request lookup significant.
