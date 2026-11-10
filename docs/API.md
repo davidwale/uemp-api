@@ -8,13 +8,26 @@ cookie that `POST /auth/login` sets, so browsers send it automatically with `cre
 | Topic | Convention |
 |---|---|
 | Success | `{ "data": … }`; paginated lists add `"meta": { page, pageSize, total, totalPages }` |
-| Errors | `{ "error": { "code", "message", "details"? } }` |
+| Errors | `{ "error": { "code", "message", "details"?, "requestId" } }`. `requestId` matches the server log entry. |
 | Pagination | `?page=1&pageSize=20` (max 100) |
 | CSV | Report endpoints accept `?format=csv` |
-| Status codes | `400` malformed request · `401` not signed in · `403` role or scope denied · `404` not found / not visible to you · `409` conflict (duplicate, record in use) · `422` validation error or business rule violation · `429` rate limited |
 
-Error codes you'll see: `VALIDATION_ERROR`, `UNAUTHENTICATED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
-`BUSINESS_RULE_VIOLATION`, `RATE_LIMITED`, `INTERNAL_ERROR`.
+### Error codes
+
+| Status | Code | When |
+|---|---|---|
+| 400 | `BAD_REQUEST` | Malformed JSON body, or a wrong current password when changing password |
+| 401 | `UNAUTHENTICATED` | Not signed in, session expired or revoked, or wrong email/password |
+| 403 | `FORBIDDEN` | Role lacks the permission, record is outside your scope, or cross-origin request rejected |
+| 404 | `NOT_FOUND` | Record doesn't exist or isn't visible to you |
+| 409 | `CONFLICT` | e.g. registering for a course you're already registered for this semester |
+| 409 | `DUPLICATE` | Unique value already used (email, matric number, course code…) |
+| 409 | `IN_USE` | Record is referenced by others and can't be removed |
+| 422 | `VALIDATION_ERROR` | Field validation failed; `details` lists `{ field, message }` |
+| 422 | `BUSINESS_RULE_VIOLATION` | Request is valid but breaks a rule, e.g. unit cap exceeded, registration closed, approving a sheet that isn't submitted |
+| 422 | `CONSTRAINT_VIOLATION` | A database CHECK constraint rejected the values |
+| 429 | `TOO_MANY_REQUESTS` | Rate limit reached |
+| 500 | `INTERNAL_ERROR` | Unexpected error (details are logged, not returned) |
 
 ## Endpoints
 

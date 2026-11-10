@@ -4,10 +4,21 @@ REST API for a role-based university management system. Students register for co
 results. Lecturers enter and submit scores. Department administrators approve results and manage their
 department. The Super Administrator manages the whole institution.
 
-**Live app:** https://uemp-client.vercel.app  ·  **Web client repo:** [uemp-client](https://github.com/davidwale/uemp-client)  ·  **Stack:** Express 5 · TypeScript · Sequelize · PostgreSQL · Zod · Vitest
+**Stack:** Express 5 · TypeScript · Sequelize · PostgreSQL · Zod · Vitest
 
-> UEMP is two apps in two repositories: this API, and the React web client ([uemp-client](https://github.com/davidwale/uemp-client)).
-> This README is the main entry point. Technical documentation lives in [`docs/`](docs).
+| | |
+|---|---|
+| **Live app** | https://uemp-client.vercel.app |
+| **API** (this repo, hosted on Render) | https://uemp-api-2d85.onrender.com: health check at [`/api/health`](https://uemp-api-2d85.onrender.com/api/health) |
+| **Web client repo** (hosted on Vercel) | [davidwale/uemp-client](https://github.com/davidwale/uemp-client) |
+
+UEMP is made of **two separate applications, each in its own repository**: this REST API and the React web client.
+This README is the main entry point. Technical documentation lives in [`docs/`](docs).
+
+> The API runs on Render's free plan and sleeps when idle. The first request after a quiet period can take up
+> to a minute.
+
+
 
 ---
 
@@ -88,28 +99,32 @@ automatically.
 | `TEST_DATABASE_URL` | `postgres://localhost:5432/uemp_test` | Test database |
 | `DATABASE_SSL` | `false` | Enable TLS for managed Postgres |
 | `PORT` | `4000` | API port |
-| `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed browser origins (the web client's URL) |
+| `NODE_ENV` | `development` | `production` enables secure cookies and production checks |
+| `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated browser origins allowed to call the API (the web client's URL). **Required in production.** The server won't start without it. |
 | `SESSION_TTL_HOURS` / `SESSION_IDLE_TIMEOUT_MINUTES` | `12` / `120` | Absolute and idle session lifetime |
 | `LOG_LEVEL` | `info` | pino log level |
 
 ## Deployment
 
-**API and database: Render** (Blueprint included)
-1. Render dashboard → **New → Blueprint** → select this repository.
-2. When prompted for `CORS_ORIGINS`, enter the web client's Vercel URL, e.g. `https://uemp-client.vercel.app`.
-3. Render creates the `uemp-db` PostgreSQL database and the `uemp-api` web service, and injects the database's
-   connection string as `DATABASE_URL`. On every start the service applies pending migrations; it seeds demo
-   data only when the database is empty.
-4. Check `https://<your-service>.onrender.com/api/health` returns `{"status":"ok"}`.
+The live system runs the **API and database on Render** and the **web client on Vercel**.
 
-**Web client: Vercel.** Deploy the [uemp-client](https://github.com/davidwale/uemp-client) repo and point its
-`/api/*` rewrite at this service's URL. The browser then sees one origin, so the `HttpOnly` / `SameSite=Lax`
-session cookie works without cross-site configuration.
+**API and database: Render** (`render.yaml` Blueprint)
+1. Render dashboard → **New → Blueprint** → select this repository → **Apply**.
+   Render creates the `uemp-db` PostgreSQL database and the `uemp-api` web service, and injects the database's
+   connection string as `DATABASE_URL`.
+2. In **uemp-api → Environment**, check that `CORS_ORIGINS` is set to the web client's URL
+   (`https://uemp-client.vercel.app`), then **Save, rebuild, and deploy**. The service won't start without it.
+3. On every start the service applies pending migrations, and it seeds demo data only when the database is empty.
+4. Check that `https://<your-service>.onrender.com/api/health` returns `{"status":"ok"}`.
 
-On Render's free plan the service sleeps after a period of inactivity, and the first request afterwards takes
-up to a minute while it wakes. Open `/api/health` before a demo.
+**Web client: Vercel.** See the [uemp-client README](https://github.com/davidwale/uemp-client#deployment-vercel).
+Its `vercel.json` proxies `/api/*` to this service, so the browser sees one origin and the `HttpOnly`,
+`SameSite=Lax` session cookie works without cross-site configuration.
 
-To host elsewhere: any Node.js host with PostgreSQL works. Build with `npm ci --include=dev && npm run build`,
+**Resetting the live demo data:** copy the database's *External Database URL* from Render, then run
+`DATABASE_URL="<url>" DATABASE_SSL=true npm run db:seed -- --fresh` from this repo.
+
+**Other hosts:** any Node.js host with PostgreSQL works. Build with `npm ci --include=dev && npm run build`,
 start with `npm run start:prod`, and set `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_SSL` and `CORS_ORIGINS`.
 
 ## Documentation

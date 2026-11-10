@@ -13,11 +13,11 @@ UEMP is two independently developed and deployed applications, each in its own r
 flowchart LR
     B[Browser] -- "HTML / JS / CSS" --> W
     B -- "/api/* · JSON · HttpOnly cookie" --> W
-    subgraph Web [uemp-client · static host]
+    subgraph Web [uemp-client · Vercel]
       W[Static files + rewrite rules]
     end
     W -- "proxy /api/*" --> E
-    subgraph API [uemp-api · Node.js process]
+    subgraph API [uemp-api · Render]
       E[Express app] --> M[Middleware<br/>helmet · cors · rate limit · origin check · authenticate]
       M --> R[Routers<br/>authorize permission]
       R --> S[Services<br/>business rules · scope checks · transactions]
@@ -33,14 +33,15 @@ hosting needs: a static CDN versus a Node process with a database. Keeping them 
 release cycle and history, and keeps the API usable by other clients later, such as a mobile app. The
 contract between them is the HTTP API documented in [API.md](API.md).
 
-**Same origin without coupling.** The static host rewrites `/api/*` to the API service (in development,
+**Same origin without coupling.** Vercel rewrites `/api/*` to the API service on Render (in development,
 the Vite dev server does the same). To the browser, the UI and the API share one origin, so the session cookie
 can stay `HttpOnly` and `SameSite=Lax` with no cross-site cookie or CORS setup. The API stays
 free of any frontend code.
 
-**Inside the API**, the server is a **modular monolith**: one deployable unit organised by business domain.
-For a system of this size it gives one deploy, one database transaction boundary and no network hops between
-modules, while keeping the boundaries clean enough to split later if needed.
+**Inside the API**, the code is organised as a **modular monolith**: a single service whose modules follow the
+business domains (auth, users, courses, registrations, results…) rather than splitting into microservices.
+For a system of this size, that gives one database transaction boundary and no network hops between modules,
+while keeping the boundaries clean enough to split later if needed.
 
 ## Repository layout
 
@@ -141,7 +142,7 @@ guarantees (constraints, locks, transactions) live there.
 
 ## Operational concerns
 
-- **Configuration** is validated at startup, so the process refuses to boot with a bad `DATABASE_URL`.
+- **Configuration** is validated at startup with Zod. The process refuses to boot with a clear message if, for example, `DATABASE_URL` is missing or `CORS_ORIGINS` is missing in production or isn't a valid origin. The allowed origins are logged on startup.
 - **Logging** is structured JSON with request IDs; secrets and cookies are redacted.
 - **Graceful shutdown**: on SIGTERM the server stops accepting connections, finishes in-flight requests
   and closes the DB pool.
